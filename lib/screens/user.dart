@@ -1,12 +1,13 @@
 // ignore_for_file: non_constant_identifier_names, prefer_interpolation_to_compose_strings
 
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+
 import 'package:recipe_app/myWidgets/my_list_tile.dart';
+import 'package:recipe_app/screens/login_or_register_page.dart';
 import 'package:recipe_app/screens/my_favs.dart';
 import 'package:recipe_app/screens/my_recipes.dart';
 import 'package:recipe_app/screens/user_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class MyUser extends StatefulWidget {
   const MyUser({
@@ -18,8 +19,10 @@ class MyUser extends StatefulWidget {
 }
 
 class _MyUserState extends State<MyUser> {
-  final User = FirebaseAuth.instance.currentUser;
-  final userCollection = FirebaseFirestore.instance.collection("Users");
+  logOut() async {
+    final prefs = await SharedPreferences.getInstance();
+    prefs.remove('isLogin');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -30,40 +33,14 @@ class _MyUserState extends State<MyUser> {
         children: [
           Column(
             children: [
-              DrawerHeader(
+              const DrawerHeader(
                 child: Column(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.person,
                       size: 95,
                       color: Colors.black87,
                     ),
-                    StreamBuilder<DocumentSnapshot>(
-                        stream: userCollection.doc(User!.email).snapshots(),
-                        builder: (context, snapshot) {
-                          if (snapshot.hasData) {
-                            if (!snapshot.data!.exists) {
-                              return const Center(
-                                child: Text("User data does not exist."),
-                              );
-                            }
-
-                            final userData =
-                                snapshot.data!.data() as Map<String, dynamic>?;
-                            if (userData == null) {
-                              return const Center(
-                                child: Text("No user data available."),
-                              );
-                            }
-                            return Padding(
-                              padding: const EdgeInsets.only(top: 5.0),
-                              child:
-                                  Center(child: Text("#" + userData["name"])),
-                            );
-                          }
-                          return const Center(
-                              child: CircularProgressIndicator());
-                        }),
                   ],
                 ),
               ),
@@ -87,14 +64,6 @@ class _MyUserState extends State<MyUser> {
                     MaterialPageRoute(
                         builder: (context) => const UserScreen())),
               ),
-              /*  MyListTitle(
-                icon: Icons.mode_night_outlined,
-                text: "Dark Mode",
-                onTap: () {
-                  Provider.of<ThemeProvider>(context, listen: false)
-                      .toggleTheme();
-                },
-              ), */
             ],
           ),
           Padding(
@@ -103,7 +72,11 @@ class _MyUserState extends State<MyUser> {
               icon: Icons.logout,
               text: "Log Out",
               onTap: () {
-                FirebaseAuth.instance.signOut();
+                logOut();
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LoginOrRegisterPage()));
               },
             ),
           ),

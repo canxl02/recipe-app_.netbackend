@@ -1,7 +1,14 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:recipe_app/model/login_response.dart';
+import 'package:recipe_app/model/userLogin.dart';
 import 'package:recipe_app/myWidgets/my_buttonA.dart';
 import 'package:recipe_app/myWidgets/my_textfieldA.dart';
+import 'package:recipe_app/screens/bottom_navigation_bar.dart';
+import 'package:recipe_app/screens/login_or_register_page.dart';
+import 'package:recipe_app/services/DependencyConfiguration.dart';
+import 'package:recipe_app/services/UserServices/UserService.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
   final Function()? onTap;
@@ -12,33 +19,18 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final emailController = TextEditingController();
+  late bool isLogin;
 
-  final passwordController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
 
-  void showError(String message) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          backgroundColor: Colors.grey,
-          title: Text(
-            message,
-            style: const TextStyle(color: Colors.black, fontFamily: "hellix"),
-          ),
-        );
-      },
-    );
-  }
+  final UserService _userService = getIt.get<UserService>();
 
-  // sign user in method
-  void signUserIn() async {
-    try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: emailController.text, password: passwordController.text);
-    } on FirebaseAuthException catch (e) {
-      showError(e.code);
-    }
+  void _loadPreferences() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      isLogin = prefs.getBool('isLogin') ?? false;
+    });
   }
 
   @override
@@ -72,7 +64,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 25),
 
                 MyTextfielda(
-                  controller: emailController,
+                  controller: _emailController,
                   hintText: 'Email',
                   obscureText: false,
                 ),
@@ -80,7 +72,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 10),
 
                 MyTextfielda(
-                  controller: passwordController,
+                  controller: _passwordController,
                   hintText: 'Password',
                   obscureText: true,
                 ),
@@ -91,7 +83,27 @@ class _LoginPageState extends State<LoginPage> {
 
                 MyButtona(
                   text: "Sign In",
-                  onTap: signUserIn,
+                  onTap: () async {
+                    LoginRegisterResponse apiResponse =
+                        await _userService.loginUser(UserLogin(
+                      password: _passwordController.text,
+                      email: _emailController.text,
+                    ));
+                    if (apiResponse.success!) {
+                      final prefs = await SharedPreferences.getInstance();
+
+                      prefs.setBool('isLogin', true);
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => BottomnavigationBar()));
+                    } else {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => LoginOrRegisterPage()));
+                    }
+                  },
                 ),
 
                 const SizedBox(height: 50),

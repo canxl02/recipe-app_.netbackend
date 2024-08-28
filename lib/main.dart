@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:recipe_app/constants/color.dart';
 
 import 'package:recipe_app/screens/splash_screen.dart';
+import 'package:recipe_app/services/DependencyConfiguration.dart';
 
 import 'package:recipe_app/theme/theme_provider.dart';
 
@@ -18,6 +19,7 @@ Future<void> main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  configureInjection();
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,

@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
 
 class MyButtona extends StatelessWidget {
-  final Function()? onTap;
+  // Changed the type from Function()? to VoidCallback?
+  final VoidCallback? onTap;
   final String text;
 
-  const MyButtona({super.key, required this.onTap, required this.text});
+  const MyButtona({
+    super.key,
+    required this.onTap,
+    required this.text,
+  });
 
   @override
   Widget build(BuildContext context) {
