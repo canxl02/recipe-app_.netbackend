@@ -1,14 +1,8 @@
-// ignore_for_file: annotate_overrides, avoid_print
-
-// import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hexcolor/hexcolor.dart';
-
 import 'package:recipe_app/constants/color.dart';
-import 'package:recipe_app/model/recipe.dart';
+import 'package:recipe_app/model/recipe_info.dart';
 
 class RecipeViewer extends StatefulWidget {
   const RecipeViewer({super.key});
@@ -18,41 +12,23 @@ class RecipeViewer extends StatefulWidget {
 }
 
 class _RecipeViewerState extends State<RecipeViewer> {
-  late Recipe recipe;
-  late bool isFavorite = false;
+  late RecipeInfo recipe;
+  late bool isFavorite;
 
   @override
   void initState() {
     recipe = Get.arguments["recipe"];
-    checkIfFavorite();
+    // isFavorite durumunu API üzerinden kontrol edebilirsiniz
+    isFavorite = false; // API çağrısıyla gerçek durumu buraya alabilirsiniz.
     super.initState();
   }
 
-  Future<void> checkIfFavorite() async {
-    final userCollection = FirebaseFirestore.instance.collection("Users");
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final favRef =
-        userCollection.doc(currentUser!.email).collection("Favorites");
-
-    var querySnapshot =
-        await favRef.where('recipeId', isEqualTo: recipe.recipeId).get();
-    setState(() {
-      isFavorite = querySnapshot.docs.isNotEmpty;
-    });
-  }
-
   Future<void> toggleFavorite() async {
-    final userCollection = FirebaseFirestore.instance.collection("Users");
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final favRef =
-        userCollection.doc(currentUser!.email).collection("Favorites");
-
+    // Favori durumunu API üzerinden güncelleyebilirsiniz
     if (isFavorite) {
-      var doc =
-          await favRef.where('recipeId', isEqualTo: recipe.recipeId).get();
-      await doc.docs.first.reference.delete();
+      // Favoriyi API üzerinden kaldırma işlemi
     } else {
-      await favRef.add(recipe.toMap());
+      // Favoriye API üzerinden ekleme işlemi
     }
 
     setState(() {
@@ -90,7 +66,7 @@ class _RecipeViewerState extends State<RecipeViewer> {
                     color: HexColor(backgroundColor),
                     borderRadius: BorderRadius.circular(20),
                     image: DecorationImage(
-                      image: AssetImage(recipe.image),
+                      image: AssetImage(recipe.image), // Image URL from API
                       fit: BoxFit.cover,
                     ),
                   ),

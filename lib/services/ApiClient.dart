@@ -5,7 +5,7 @@ import '../model/mobile_api_response.dart';
 
 class ApiClient {
   Dio? _dio;
-  final _baseUrl = "http://172.6.70.6:7113/api/";
+  final _baseUrl = "http://192.168.1.113:7154/api/";
 
   var onResponseCallback;
   var onErrorCallback;
@@ -46,6 +46,14 @@ class ApiClient {
     Response response =
         await _dio!.post('$endPoint?${Transformer.urlEncodeMap(formData)}');
     print("Post Dio Response: ${response.toString()}");
+    return response;
+  }
+
+  // Yeni metod: Delete request
+  Future<Response> deleteRequest(String endPoint, int id) async {
+    _dio!.options.method = "DELETE";
+    Response response = await _dio!.delete('$endPoint/$id');
+    print("Delete Dio Response: ${response.toString()}");
     return response;
   }
 

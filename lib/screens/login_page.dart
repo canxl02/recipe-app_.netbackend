@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/model/login_response.dart';
+import 'package:recipe_app/model/loginRegister_response.dart';
 import 'package:recipe_app/model/userLogin.dart';
 import 'package:recipe_app/myWidgets/my_buttonA.dart';
 import 'package:recipe_app/myWidgets/my_textfieldA.dart';
@@ -20,6 +20,7 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   late bool isLogin;
+  int? userId;
 
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -30,6 +31,7 @@ class _LoginPageState extends State<LoginPage> {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       isLogin = prefs.getBool('isLogin') ?? false;
+      userId = prefs.getInt("userId");
     });
   }
 
@@ -89,15 +91,19 @@ class _LoginPageState extends State<LoginPage> {
                       password: _passwordController.text,
                       email: _emailController.text,
                     ));
+
                     if (apiResponse.success!) {
                       final prefs = await SharedPreferences.getInstance();
-
+                      // Store the user ID and login state in SharedPreferences
                       prefs.setBool('isLogin', true);
+                      prefs.setInt('userId', apiResponse.data!.id);
+
                       Navigator.push(
                           context,
                           MaterialPageRoute(
                               builder: (context) => BottomnavigationBar()));
                     } else {
+                      // If login fails, navigate to the login or register page
                       Navigator.push(
                           context,
                           MaterialPageRoute(

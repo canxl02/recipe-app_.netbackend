@@ -1,35 +1,28 @@
-class RecipeResponse {
-  int id;
-  String name;
-  String ingredients;
-  String instructions;
-  String servings;
-  String image;
+import 'package:recipe_app/model/recipe_info.dart';
 
+class RecipeResponse {
   RecipeResponse({
-    required this.id,
-    required this.name,
-    required this.ingredients,
-    required this.instructions,
-    required this.servings,
-    required this.image,
+    this.message,
+    this.success,
+    this.data,
   });
 
+  bool? success;
+  List<RecipeInfo>? data;
+  String? message;
+
   factory RecipeResponse.fromJson(Map<String, dynamic> json) => RecipeResponse(
-        id: json['id'],
-        name: json["name"],
-        ingredients: json["ingredients"],
-        image: json["ingredients"],
-        instructions: json["instructions"],
-        servings: json["servings"],
+        message: json['message'],
+        success: json["success"],
+        data: json["data"] != null
+            ? List<RecipeInfo>.from(
+                json["data"].map((x) => RecipeInfo.fromJson(x)))
+            : null,
       );
 
   Map<String, dynamic> toJson() => {
-        "ingredients": ingredients,
-        "servings": servings,
-        "instructions": instructions,
-        "name": name,
-        "id": id,
-        "image": image
+        "success": success,
+        "message": message,
+        "data": data?.map((RecipeInfo) => RecipeInfo.toJson()).toList,
       };
 }

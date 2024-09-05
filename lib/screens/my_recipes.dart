@@ -1,13 +1,12 @@
-// ignore_for_file: use_build_context_synchronously
-
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hexcolor/hexcolor.dart';
 import 'package:recipe_app/constants/color.dart';
-import 'package:recipe_app/model/recipe.dart';
+import 'package:recipe_app/model/myrecipe_response.dart';
+
 import 'package:recipe_app/screens/my_recipe_viewer.dart';
+import 'package:recipe_app/services/ApiClient.dart';
+import 'package:recipe_app/services/MyRecipeService/MyRecipeService.dart';
 
 class MyRecipes extends StatefulWidget {
   const MyRecipes({super.key});
@@ -17,13 +16,19 @@ class MyRecipes extends StatefulWidget {
 }
 
 class _MyRecipesState extends State<MyRecipes> {
+  late Future<List<MyRecipeResponse>> _recipesFuture;
+  MyRecipeService _myRecipeService = MyRecipeService(ApiClient());
+
+  @override
+  void initState() {
+    super.initState();
+    _recipesFuture = _myRecipeService.getUserMyRecipeList(1)
+        as Future<List<MyRecipeResponse>>;
+    // Kullanıcı ID'si
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userCollection = FirebaseFirestore.instance.collection("Users");
-    final currentUser = FirebaseAuth.instance.currentUser;
-    final CollectionReference myRecipesRef =
-        userCollection.doc(currentUser!.email).collection("MyRecipes");
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -34,60 +39,58 @@ class _MyRecipesState extends State<MyRecipes> {
           style: TextStyle(fontFamily: "hellix", color: Colors.black),
         ),
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: myRecipesRef.snapshots(),
-        builder: (BuildContext context, AsyncSnapshot asyncSnapshot) {
-          if (!asyncSnapshot.hasData) {
+      body: FutureBuilder<List<MyRecipeResponse>>(
+        future: _recipesFuture,
+        builder: (BuildContext context,
+            AsyncSnapshot<List<MyRecipeResponse>> snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
-          }
-          List<DocumentSnapshot> listOfDocumentsSnap = asyncSnapshot.data.docs;
-          return ListView.builder(
-            itemCount: listOfDocumentsSnap.length,
-            itemBuilder: (context, index) {
-              var doc = listOfDocumentsSnap[index];
-              Recipe recipe = Recipe(
-                  name: doc["name"],
-                  ingredients: doc["ingredients"],
-                  servings: doc["servings"],
-                  instructions: doc["instructions"],
-                  image: doc["image"],
-                  recipeId: doc["recipeId"]);
-
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
-                  child: ListTile(
+          } else if (snapshot.hasError) {
+            return Center(child: Text("Error: ${snapshot.error}"));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text("No recipes found"));
+          } else {
+            List<MyRecipeResponse> recipes = snapshot.data!;
+            return ListView.builder(
+              itemCount: recipes.length,
+              itemBuilder: (context, index) {
+                MyRecipeResponse recipe = recipes[index];
+                return Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Card(
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20)),
-                    tileColor: HexColor(backgroundColor),
-                    trailing: IconButton(
-                      onPressed: () {
-                        showAlertDialog(context, index, listOfDocumentsSnap);
+                    child: ListTile(
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20)),
+                      tileColor: HexColor(backgroundColor),
+                      trailing: IconButton(
+                        onPressed: () {
+                          showAlertDialog(context, index, recipes);
+                        },
+                        icon: const Icon(Icons.delete_forever),
+                      ),
+                      onTap: () {
+                        Get.to(
+                          () => const MyRecipeViewer(),
+                          arguments: {"recipe": recipe},
+                          transition: Transition.rightToLeft,
+                        );
                       },
-                      icon: const Icon(Icons.delete_forever),
+                      title: Text(recipe.data!.name),
                     ),
-                    onTap: () {
-                      Get.to(
-                        () => const MyRecipeViewer(),
-                        arguments: {"recipe": recipe},
-                        transition: Transition.rightToLeft,
-                      );
-                    },
-                    title: Text(recipe.name),
                   ),
-                ),
-              );
-            },
-          );
+                );
+              },
+            );
+          }
         },
       ),
     );
   }
 
-  void showAlertDialog(BuildContext context, int index,
-      List<DocumentSnapshot> listOfDocumentsSnap) {
+  void showAlertDialog(
+      BuildContext context, int index, List<MyRecipeResponse> recipes) {
     Widget cancelButton = ElevatedButton(
       child: const Text("Cancel"),
       onPressed: () {
@@ -95,13 +98,18 @@ class _MyRecipesState extends State<MyRecipes> {
       },
     );
     Widget continueButton = ElevatedButton(
-      child: const Text("Yes"),
-      onPressed: () {
-        listOfDocumentsSnap[index].reference.delete().then((_) {
-          Navigator.pop(context);
+        child: const Text("Yes"),
+        onPressed: () async {
+          /*
+        var result = await _myRecipeService.deleteMyRecipe(recipes[index].data.id!);
+        if (result.success) {
+          setState(() {
+            recipes.removeAt(index);
+          });
+        }
+        Navigator.pop(context);
+      },*/
         });
-      },
-    );
 
     AlertDialog alert = AlertDialog(
       title: const Text("Delete Recipe"),

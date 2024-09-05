@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:recipe_app/model/login_response.dart';
+import 'package:recipe_app/model/loginRegister_response.dart';
 import 'package:recipe_app/model/user.dart';
 import 'package:recipe_app/myWidgets/my_buttonA.dart';
 import 'package:recipe_app/myWidgets/my_textfieldA.dart';

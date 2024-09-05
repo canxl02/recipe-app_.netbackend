@@ -1,5 +1,5 @@
 import 'package:dio/dio.dart';
-import 'package:recipe_app/model/login_response.dart';
+import 'package:recipe_app/model/loginRegister_response.dart';
 import 'package:recipe_app/model/user.dart';
 import 'package:recipe_app/model/userLogin.dart';
 import 'package:recipe_app/services/ApiClient.dart';
