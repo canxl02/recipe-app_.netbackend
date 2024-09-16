@@ -7,7 +7,6 @@ import 'package:recipe_app/screens/bottom_navigation_bar.dart';
 import 'package:recipe_app/screens/login_or_register_page.dart';
 import 'package:recipe_app/services/DependencyConfiguration.dart';
 import 'package:recipe_app/services/UserServices/UserService.dart';
-
 import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginPage extends StatefulWidget {
@@ -27,12 +26,20 @@ class _LoginPageState extends State<LoginPage> {
 
   final UserService _userService = getIt.get<UserService>();
 
+  // Load preferences (userId and isLogin status)
   void _loadPreferences() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
       isLogin = prefs.getBool('isLogin') ?? false;
-      userId = prefs.getInt("userId");
+      userId = prefs.getInt('userId'); // Retrieve userId
+      print('Loaded User ID: $userId'); // Log retrieved userId
     });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPreferences(); // Load preferences when the page is initialized
   }
 
   @override
@@ -86,6 +93,7 @@ class _LoginPageState extends State<LoginPage> {
                 MyButtona(
                   text: "Sign In",
                   onTap: () async {
+                    // Login process
                     LoginRegisterResponse apiResponse =
                         await _userService.loginUser(UserLogin(
                       password: _passwordController.text,
@@ -94,14 +102,25 @@ class _LoginPageState extends State<LoginPage> {
 
                     if (apiResponse.success!) {
                       final prefs = await SharedPreferences.getInstance();
+
                       // Store the user ID and login state in SharedPreferences
                       prefs.setBool('isLogin', true);
-                      prefs.setInt('userId', apiResponse.data!.id);
 
-                      Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => BottomnavigationBar()));
+                      // Check if the user ID is valid
+                      if (apiResponse.data?.id != null) {
+                        print('User ID from API: ${apiResponse.data!.id}');
+                        prefs.setInt(
+                            'userId', apiResponse.data!.id); // Save userId
+
+                        // Navigate to bottom navigation bar
+                        Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => BottomnavigationBar()));
+                      } else {
+                        print('Error: User ID is null');
+                        // Handle the case where userId is null
+                      }
                     } else {
                       // If login fails, navigate to the login or register page
                       Navigator.push(
@@ -155,7 +174,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ],
                   ),
-                )
+                ),
               ],
             ),
           ),
